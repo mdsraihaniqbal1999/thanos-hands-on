@@ -1,0 +1,74 @@
+alertmanager:
+  enabled: false
+
+kube-state-metrics:
+  enabled: false
+
+prometheus-node-exporter:
+  enabled: false
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  replicaCount: 1
+  retention: 24h
+  retentionSize: 1GB
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  persistentVolume:
+    enabled: true
+    size: 2Gi
+  extraArgs:
+    storage.tsdb.wal-compression: null
+  sidecarContainers:
+    thanos:
+      image: quay.io/thanos/thanos:v0.42.4
+      imagePullPolicy: IfNotPresent
+      args:
+        - sidecar
+        - --log.level=info
+        - --prometheus.url=http://127.0.0.1:9090
+        - --tsdb.path=/data
+        - --grpc-address=0.0.0.0:10901
+        - --http-address=0.0.0.0:10902
+      ports:
+        - name: grpc
+          containerPort: 10901
+          protocol: TCP
+        - name: http
+          containerPort: 10902
+          protocol: TCP
+      volumeMounts:
+        - name: storage-volume
+          mountPath: /data
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+  service:
+    enabled: true
+    type: ClusterIP
+    servicePort: 80
+    additionalPorts: []
+
+serverFiles:
+  prometheus.yml:
+    external_labels:
+      cluster: east
+      prometheus_replica: prometheus-east

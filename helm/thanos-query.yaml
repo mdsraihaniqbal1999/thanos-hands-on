@@ -1,0 +1,38 @@
+query:
+  enabled: true
+  replicaCount: 1
+  endpoints:
+    autogen:
+      enabled: false
+    static: []
+  replicaLabels:
+    - prometheus_replica
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    httpPort: 9090
+    grpcPort: 10901
+
+storegateway:
+  enabled: false
+
+compactor:
+  enabled: false
+
+bucketweb:
+  enabled: false
+
+queryFrontend:
+  enabled: false
+
+receive:
+  enabled: false
+
+ruler:
+  enabled: false
