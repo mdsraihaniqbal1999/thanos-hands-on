@@ -60,7 +60,7 @@ flowchart TB
     Q -->|StoreAPI| S2
     Q -->|StoreAPI| SGW
     Q -->|StoreAPI| RCV
-    Q -.->|StoreAPI (rules eval)| RUL
+    Q -.->|"StoreAPI — rules eval"| RUL
 
     %% Collection / write path
     P1 --> S1
