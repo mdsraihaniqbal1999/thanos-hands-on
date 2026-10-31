@@ -11,7 +11,7 @@ spec:
   selector:
     app.kubernetes.io/instance: prometheus
     app.kubernetes.io/name: prometheus
-    component: server
+    app.kubernetes.io/component: server
   ports:
     - name: grpc
       port: 10901

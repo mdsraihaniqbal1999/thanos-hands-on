@@ -1,6 +1,24 @@
 # Thanos Architecture
 
-Reference: [Official Thanos Design doc](https://thanos.io/tip/thanos/design.md/) and [Components](https://thanos.io/tip/thanos/getting-started.md/).
+Reference: [Official Thanos Design doc](https://thanos.io/tip/thanos/design.md/), [Quick Tutorial](https://thanos.io/tip/thanos/quick-tutorial.md/) and [Components](https://thanos.io/tip/thanos/getting-started.md/).
+
+## Official architecture diagrams
+
+Straight from the [official Thanos README](https://github.com/thanos-io/thanos#architecture-overview) and [Quick Tutorial](https://thanos.io/tip/thanos/quick-tutorial.md/):
+
+### Deployment with Sidecar (for Kubernetes)
+
+![Thanos Sidecar deployment architecture](https://docs.google.com/drawings/d/e/2PACX-1vSJd32gPh8-MC5Ko0-P-v1KQ0Xnxa0qmsVXowtkwVGlczGfVW-Vd415Y6F129zvh3y0vHLBZcJeZEoz/pub?w=960&h=720)
+
+*Source: [thanos-io/thanos README](https://github.com/thanos-io/thanos/blob/main/README.md) — original drawing [here](https://docs.google.com/drawings/d/1AiMc1qAjASMbtqL6PNs0r9-ynGoZ9LIAtf0b9PjILxw/edit?usp=sharing).*
+
+### Deployment with Receive (scale-out / remote-write sources)
+
+![Thanos Receive deployment architecture](https://docs.google.com/drawings/d/e/2PACX-1vRdYP__uDuygGR5ym1dxBzU6LEx5v7Rs1cAUKPsl5BZrRGVl5YIj5lsD_FOljeIVOGWatdAI9pazbCP/pub?w=960&h=720)
+
+*Source: [thanos-io/thanos README](https://github.com/thanos-io/thanos/blob/main/README.md) — original drawing [here](https://docs.google.com/drawings/d/1iimTbcicKXqz0FYtSfz04JmmVFLVO9BjAjEzBm5538w/edit?usp=sharing).*
+
+> **Note:** This lab follows the **Sidecar** deployment pattern (Prometheus + Sidecar → Thanos Query), but without object storage — see the "Production considerations" section of the [README](../README.md).
 
 The official docs group Thanos components into three categories — **metric sources**, **stores**, and **queriers** — plus the write path (**Receive**) and the **Compactor** (a singleton that works directly on object storage and does not join the Thanos cluster).
 

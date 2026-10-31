@@ -59,6 +59,21 @@ helm upgrade --install prometheus prometheus-community/prometheus \
 for cluster in "$EAST_CLUSTER" "$WEST_CLUSTER"; do
   kubectl --context "kind-$cluster" --namespace "$NAMESPACE" \
     apply -f k8s/thanos-sidecar-nodeport.yaml
+  for _ in $(seq 1 60); do
+    endpoint_ip="$(
+      kubectl --context "kind-$cluster" --namespace "$NAMESPACE" \
+        get endpoints prometheus-thanos-sidecar \
+        -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true
+    )"
+    if [[ -n "$endpoint_ip" ]]; then
+      break
+    fi
+    sleep 1
+  done
+  if [[ -z "$endpoint_ip" ]]; then
+    printf 'Thanos Sidecar Service has no ready endpoints in %s.\n' "$cluster" >&2
+    exit 1
+  fi
 done
 
 east_node="thanos-demo-control-plane"

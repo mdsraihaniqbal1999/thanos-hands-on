@@ -45,9 +45,11 @@ grafana_pid=""
 cleanup() {
   if [[ -n "$query_pid" ]]; then
     kill "$query_pid" 2>/dev/null || true
+    wait "$query_pid" 2>/dev/null || true
   fi
   if [[ -n "$grafana_pid" ]]; then
     kill "$grafana_pid" 2>/dev/null || true
+    wait "$grafana_pid" 2>/dev/null || true
   fi
   rm -rf "$tmp_dir"
 }
