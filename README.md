@@ -46,7 +46,9 @@ helm upgrade --install prometheus prometheus-community/prometheus \
 helm upgrade --install thanos thanos-community/thanos \
   --kube-context kind-thanos-demo --version 0.48.0 \
   --namespace thanos --create-namespace \
-  --values helm/thanos-query.yaml
+  --values helm/thanos-query.yaml \
+  --set-string "query.endpoints.static[0]=${EAST_IP}:31091" \
+  --set-string "query.endpoints.static[1]=${WEST_IP}:31091"
 
 helm upgrade --install grafana grafana-community/grafana \
   --kube-context kind-thanos-demo --version 14.2.0 \
@@ -59,6 +61,14 @@ to the Thanos Helm command. Each Prometheus Helm release also runs a Thanos
 Sidecar container, sharing the Prometheus TSDB volume. A small NodePort Service
 exposes only the sidecar gRPC port (`31091`) on the kind Docker network so the
 Query pod in one cluster can reach the other cluster's sidecar.
+
+If installing the Helm releases manually, set the addresses for the Thanos
+Query endpoints from the kind Docker network first:
+
+```sh
+EAST_IP="$(docker inspect --format '{{(index .NetworkSettings.Networks "kind").IPAddress}}' thanos-demo-control-plane)"
+WEST_IP="$(docker inspect --format '{{(index .NetworkSettings.Networks "kind").IPAddress}}' thanos-demo-west-control-plane)"
+```
 
 The Grafana admin password is generated locally and stored in a Kubernetes
 Secret; it is not checked into this repository or printed by the script. Read

@@ -8,6 +8,13 @@ THANOS_NAMESPACE="thanos"
 QUERY_PORT=19090
 GRAFANA_PORT=13000
 
+for tool in kubectl helm docker curl grep; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    printf 'Required tool not found: %s\n' "$tool" >&2
+    exit 1
+  fi
+done
+
 for context in "$EAST_CONTEXT" "$WEST_CONTEXT"; do
   node_count="$(kubectl --context "$context" get nodes --no-headers | wc -l | tr -d ' ')"
   if [[ "$node_count" != "3" ]]; then
@@ -56,11 +63,12 @@ grafana_pid=$!
 wait_for_url() {
   local url="$1"
   local log="$2"
+  local process_id="$3"
   for _ in $(seq 1 60); do
     if curl --fail --silent "$url" >/dev/null; then
       return 0
     fi
-    if ! kill -0 "$query_pid" 2>/dev/null && [[ "$log" == "$query_log" ]]; then
+    if ! kill -0 "$process_id" 2>/dev/null; then
       cat "$log" >&2
       return 1
     fi
@@ -71,8 +79,8 @@ wait_for_url() {
   return 1
 }
 
-wait_for_url "http://127.0.0.1:$QUERY_PORT/-/healthy" "$query_log"
-wait_for_url "http://127.0.0.1:$GRAFANA_PORT/api/health" "$grafana_log"
+wait_for_url "http://127.0.0.1:$QUERY_PORT/-/healthy" "$query_log" "$query_pid"
+wait_for_url "http://127.0.0.1:$GRAFANA_PORT/api/health" "$grafana_log" "$grafana_pid"
 
 for cluster in east west; do
   result="$(
@@ -80,9 +88,9 @@ for cluster in east west; do
       "http://127.0.0.1:$QUERY_PORT/api/v1/query" \
       --data-urlencode "query=up{cluster=\"$cluster\"}"
   )"
-  if ! jq -e --arg cluster "$cluster" \
-    '.status == "success" and (.data.result | length > 0) and all(.data.result[]; .metric.cluster == $cluster)' \
-    <<<"$result" >/dev/null; then
+  if ! grep -Eq '"status"[[:space:]]*:[[:space:]]*"success"' <<<"$result" \
+    || ! grep -Fq "\"cluster\":\"$cluster\"" <<<"$result" \
+    || grep -Eq '"result"[[:space:]]*:[[:space:]]*\[\]' <<<"$result"; then
     printf 'Thanos did not return healthy Prometheus series for cluster %s:\n%s\n' \
       "$cluster" "$result" >&2
     exit 1
@@ -94,7 +102,10 @@ stores="$(
   curl --fail --silent --show-error \
     "http://127.0.0.1:$QUERY_PORT/api/v1/stores"
 )"
-if ! jq -e '.status == "success" and (.data | length >= 2)' <<<"$stores" >/dev/null; then
+east_ip="$(docker inspect --format '{{(index .NetworkSettings.Networks "kind").IPAddress}}' thanos-demo-control-plane)"
+west_ip="$(docker inspect --format '{{(index .NetworkSettings.Networks "kind").IPAddress}}' thanos-demo-west-control-plane)"
+if ! grep -Fq "$east_ip:31091" <<<"$stores" \
+  || ! grep -Fq "$west_ip:31091" <<<"$stores"; then
   printf 'Expected Thanos Query to discover both Store API endpoints:\n%s\n' "$stores" >&2
   exit 1
 fi

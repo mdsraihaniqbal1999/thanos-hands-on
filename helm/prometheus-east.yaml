@@ -14,6 +14,10 @@ server:
   replicaCount: 1
   retention: 24h
   retentionSize: 1GB
+  global:
+    external_labels:
+      cluster: east
+      prometheus_replica: prometheus-east
   resources:
     requests:
       cpu: 250m
@@ -66,9 +70,3 @@ server:
     type: ClusterIP
     servicePort: 80
     additionalPorts: []
-
-serverFiles:
-  prometheus.yml:
-    external_labels:
-      cluster: east
-      prometheus_replica: prometheus-east

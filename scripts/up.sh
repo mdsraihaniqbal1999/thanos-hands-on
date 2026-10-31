@@ -47,14 +47,14 @@ helm upgrade --install prometheus prometheus-community/prometheus \
   --version "$PROMETHEUS_CHART_VERSION" \
   --namespace "$NAMESPACE" --create-namespace \
   --values helm/prometheus-east.yaml \
-  --wait --timeout 10m
+  --wait --timeout 10m --atomic
 
 helm upgrade --install prometheus prometheus-community/prometheus \
   --kube-context "kind-$WEST_CLUSTER" \
   --version "$PROMETHEUS_CHART_VERSION" \
   --namespace "$NAMESPACE" --create-namespace \
   --values helm/prometheus-west.yaml \
-  --wait --timeout 10m
+  --wait --timeout 10m --atomic
 
 for cluster in "$EAST_CLUSTER" "$WEST_CLUSTER"; do
   kubectl --context "kind-$cluster" --namespace "$NAMESPACE" \
@@ -77,7 +77,7 @@ helm upgrade --install thanos thanos-community/thanos \
   --values helm/thanos-query.yaml \
   --set-string "query.endpoints.static[0]=${east_ip}:31091" \
   --set-string "query.endpoints.static[1]=${west_ip}:31091" \
-  --wait --timeout 10m
+  --wait --timeout 10m --atomic
 
 if ! kubectl --context "kind-$EAST_CLUSTER" --namespace "$NAMESPACE" \
   get secret grafana-admin >/dev/null 2>&1; then
@@ -94,7 +94,7 @@ helm upgrade --install grafana grafana-community/grafana \
   --version "$GRAFANA_CHART_VERSION" \
   --namespace "$NAMESPACE" --create-namespace \
   --values helm/grafana.yaml \
-  --wait --timeout 10m
+  --wait --timeout 10m --atomic
 
 cat <<EOF
 
